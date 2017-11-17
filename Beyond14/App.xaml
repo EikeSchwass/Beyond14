@@ -1,0 +1,29 @@
+﻿<Application x:Class="Beyond14.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="MainWindow.xaml">
+  <Application.Resources>
+    <Style TargetType="Button">
+      <Setter Property="Margin" Value="4" />
+      <Setter Property="MinHeight" Value="18" />
+    </Style>
+
+    <Color x:Key="HighlightColor">#FF90EE90</Color>
+    <Color x:Key="BackgroundColor">#FF323D32</Color>
+    <SolidColorBrush x:Key="BackgroundColorBrush">#FF323D32</SolidColorBrush>
+    <SolidColorBrush x:Key="HighlightColorBrush">#FF90EE90</SolidColorBrush>
+
+    <SolidColorBrush x:Key="TileColor1" Color="CornflowerBlue" />
+    <SolidColorBrush x:Key="TileColor2" Color="LawnGreen" />
+    <SolidColorBrush x:Key="TileColor3" Color="Tomato" />
+    <SolidColorBrush x:Key="TileColor4" Color="Fuchsia" />
+    <SolidColorBrush x:Key="TileColor5" Color="Gold" />
+    <SolidColorBrush x:Key="TileColor6" Color="DarkOrange" />
+    <RadialGradientBrush x:Key="TileColor7" Center="0.5,0.5">
+      <GradientStopCollection>
+        <GradientStop Offset="0.9" Color="#FF617061" />
+        <GradientStop Offset="0.95" Color="{StaticResource HighlightColor}" />
+      </GradientStopCollection>
+    </RadialGradientBrush>
+  </Application.Resources>
+</Application>
