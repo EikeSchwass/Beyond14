@@ -185,7 +185,7 @@ namespace MCTS
         {
             TState state = expandedNode.State;
             int depth = 0;
-            while (!IsFiniteState(state) && depth <= 12)
+            while (!IsFiniteState(state) && depth <= 4)
             {
                 //DebugCallback(state);
                 var allowedMoves = AllowedMoves(state);

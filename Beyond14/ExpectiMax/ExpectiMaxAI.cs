@@ -102,7 +102,7 @@ namespace Beyond14.ExpectiMax
 
         public static double Heuristik(Board board)
         {
-            return GameHelper.GetEmptyTileCount(board.Field) / 32.0 + GameHelper.GetMaxTileInArea(board.Field) / 32.0;
+            return GameHelper.GetEmptyTileCount(board.Field) / 32.0+ GameHelper.GetMaxTileInArea(board.Field) / 128.0;
             double rating = 0;
             List<short> tiles = new List<short>();
             ushort highestTile = GameHelper.GetMaxTileInArea(board.Field);
