@@ -11,22 +11,20 @@ namespace MCTS
     {
         public IsFiniteStateDelegate<TState> IsFiniteState { get; }
         public EvaluateOutcomeDelegate<TState> EvaluateOutcome { get; }
-        public Action<TState> DebugCallback { get; }
         public double ExplorationParameter { get; }
         internal double ExplorationParameterBase { get; }
         internal AllowedMovesDelegate<TState, TMove, TPrePropState> AllowedMoves { get; }
         internal PossibleNextStatesDelegate<TState, TPrePropState> PossibleNextStates { get; }
-        internal StateNode<TState, TMove, TPrePropState> Root { get; }
+        internal StateNode<TState, TMove, TPrePropState> Root { get; private set; }
 
         private double CurrentBestRating { get; set; }
 
-        public PropUTC(TState startState, AllowedMovesDelegate<TState, TMove, TPrePropState> allowedMoves, PossibleNextStatesDelegate<TState, TPrePropState> possibleNextStates, IsFiniteStateDelegate<TState> isFiniteState, EvaluateOutcomeDelegate<TState> evaluateOutcome, Action<TState> debugCallback, double explorationParameter = 2.1, double explorationParameterBase = 0.07)
+        public PropUTC(TState startState, AllowedMovesDelegate<TState, TMove, TPrePropState> allowedMoves, PossibleNextStatesDelegate<TState, TPrePropState> possibleNextStates, IsFiniteStateDelegate<TState> isFiniteState, EvaluateOutcomeDelegate<TState> evaluateOutcome, double explorationParameter = 2.1, double explorationParameterBase = 0.07)
         {
             AllowedMoves = allowedMoves;
             PossibleNextStates = possibleNextStates;
             IsFiniteState = isFiniteState;
             EvaluateOutcome = evaluateOutcome;
-            DebugCallback = debugCallback;
             ExplorationParameter = explorationParameter;
             ExplorationParameterBase = explorationParameterBase;
             Root = new StateNode<TState, TMove, TPrePropState>(null, startState) { IsLeaf = true };
@@ -43,7 +41,7 @@ namespace MCTS
             var bestChild = Root.Children.First();
             foreach (var node in Root.Children)
             {
-                if (node.Visits > bestChild.Visits)
+                if (node.Rating > bestChild.Rating)
                 {
                     bestChild = node;
                 }
@@ -185,7 +183,7 @@ namespace MCTS
         {
             TState state = expandedNode.State;
             int depth = 0;
-            while (!IsFiniteState(state) && depth <= 4)
+            while (!IsFiniteState(state) && depth <= 2)
             {
                 //DebugCallback(state);
                 var allowedMoves = AllowedMoves(state);
@@ -213,6 +211,26 @@ namespace MCTS
             double result = rating + explore;
             if (double.IsNaN(result)) { }
             return result;
+        }
+
+        public void MoveRoot(TState board)
+        {
+            foreach (var rootChild in Root.Children)
+            {
+                foreach (var grandChild in rootChild.Children)
+                {
+                    var newRoot = grandChild.Key;
+                    if (Equals(newRoot.State, board))
+                    {
+                        newRoot.Parent = null;
+                        Root = newRoot;
+                        if (Root.IsLeaf)
+                            Expansion(Root, Root);
+                        return;
+                    }
+                }
+            }
+            throw new InvalidOperationException("No matching child found");
         }
     }
 }

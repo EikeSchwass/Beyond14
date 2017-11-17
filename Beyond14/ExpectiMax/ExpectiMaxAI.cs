@@ -11,7 +11,7 @@ namespace Beyond14.ExpectiMax
         private long LastDuration { get; set; } = 0;
         private int Depth { get; set; } = 2;
 
-        protected override Move CalculateNextMove(Board board, Action<Board> debugBoard)
+        protected override Move CalculateNextMove(Board board, Move? lastMove)
         {
             var emptyTileCount = 16 - GameHelper.GetEmptyTileCount(board.Field);
             Depth = (int)Math.Sqrt(emptyTileCount);
@@ -102,7 +102,8 @@ namespace Beyond14.ExpectiMax
 
         public static double Heuristik(Board board)
         {
-            return GameHelper.GetEmptyTileCount(board.Field) / 32.0+ GameHelper.GetMaxTileInArea(board.Field) / 128.0;
+            var emptyTileCount = GameHelper.GetEmptyTileCount(board.Field);
+            return emptyTileCount / 8.0 + GameHelper.GetMaxTileInArea(board.Field) / 16.0;
             double rating = 0;
             List<short> tiles = new List<short>();
             ushort highestTile = GameHelper.GetMaxTileInArea(board.Field);

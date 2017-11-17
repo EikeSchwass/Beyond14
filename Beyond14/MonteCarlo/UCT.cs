@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using MCTS;
 
 namespace Beyond14.MonteCarlo
@@ -11,25 +9,40 @@ namespace Beyond14.MonteCarlo
     public class UCT : AI
     {
         private long MoveDuration { get; }
+        private PropUTC<Board, Move, Board> PropUTC { get; set; }
 
-        public UCT(long moveDuration = 3072)
+        public UCT(long moveDuration = 128)
         {
             MoveDuration = moveDuration;
         }
 
-
-        protected override Move CalculateNextMove(Board board, Action<Board> debugBoard)
+        protected override Move CalculateNextMove(Board board, Move? lastMove)
         {
-            var propUTC = new PropUTC<Board, Move, Board>(board, AllowedMoves, PossibleNextStates, IsFiniteState, EvaluateOutcome, debugBoard);
+            if (lastMove != null && false)
+            {
+                try
+                {
+                    PropUTC.MoveRoot(board);
+                }
+                catch (InvalidOperationException)
+                {
+                    PropUTC = new PropUTC<Board, Move, Board>(board, AllowedMoves, PossibleNextStates, IsFiniteState, EvaluateOutcome);
+                    Debug.WriteLine("Had to reset tree", "Error");
+                }
+            }
+            else
+            {
+                PropUTC = new PropUTC<Board, Move, Board>(board, AllowedMoves, PossibleNextStates, IsFiniteState, EvaluateOutcome);
+            }
             var cancellationTokenSource = new CancellationTokenSource();
             var token = cancellationTokenSource.Token;
             var stopwatch = Stopwatch.StartNew();
             while (stopwatch.ElapsedMilliseconds <= MoveDuration)
             {
-                propUTC.ImproveTree(token);
+                PropUTC.ImproveTree(token);
             }
             stopwatch.Stop();
-            return propUTC.GetCurrentBestMove();
+            return PropUTC.GetCurrentBestMove();
         }
 
         private KeyValuePair<Move, Board>[] AllowedMoves(Board state)

@@ -7,12 +7,12 @@ namespace Beyond14
 {
     public abstract class AI
     {
-        public Task<Move> CalculateMoveAsync(Board board, Action<Board> debugBoard)
+        public Task<Move> CalculateMoveAsync(Board board, Move? lastMove)
         {
-            return Task.Factory.StartNew(() => CalculateNextMove(board, debugBoard));
+            return Task.Factory.StartNew(() => CalculateNextMove(board, lastMove));
         }
 
-        protected abstract Move CalculateNextMove(Board board, Action<Board> debugBoard);
+        protected abstract Move CalculateNextMove(Board board, Move? lastMove);
 
         protected List<Move> GetAllowedMoves(Board board)
         {

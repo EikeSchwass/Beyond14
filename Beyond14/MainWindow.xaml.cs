@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+// ReSharper disable once RedundantUsingDirective
 using Beyond14.ExpectiMax;
 using Beyond14.MonteCarlo;
 
@@ -22,6 +24,7 @@ namespace Beyond14
         private Stack<Board> BoardHistory { get; } = new Stack<Board>();
         private TextBlock[,] TextBlocks { get; } = new TextBlock[4, 4];
         private Board CurrentBoard => BoardHistory.Any() ? BoardHistory.Peek() : new Board(0, 1, 2);
+        private Move? LastMove { get; set; }
 
         private AI AI { get; }
 
@@ -40,9 +43,13 @@ namespace Beyond14
             ResetButton.IsEnabled = false;
             while (GameHelper.GetEmptyTileCount(CurrentBoard.Field) > 0)
             {
-                var move = await AI.CalculateMoveAsync(CurrentBoard, DebugBoard);
+                var stopwatch = Stopwatch.StartNew();
+                var move = await AI.CalculateMoveAsync(CurrentBoard, LastMove);
                 ExecuteMove(move);
-                await Task.Delay(100);
+                LastMove = move;
+                stopwatch.Stop();
+                if (stopwatch.ElapsedMilliseconds < 100)
+                    await Task.Delay((int)(100 - stopwatch.ElapsedMilliseconds));
             }
         }
 
