@@ -11,7 +11,7 @@ namespace Beyond14.MonteCarlo
         private long MoveDuration { get; }
         private PropUTC<Board, Move, Board> PropUTC { get; set; }
 
-        public UCT(long moveDuration = 128)
+        public UCT(long moveDuration = 150)
         {
             MoveDuration = moveDuration;
         }
