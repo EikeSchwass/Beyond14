@@ -57,6 +57,9 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="AI.cs" />
+    <Compile Include="CompetitionWindow.xaml.cs">
+      <DependentUpon>CompetitionWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ExpectiMax\ExpectiMaxAI.cs" />
     <Compile Include="GameHelper.cs" />
     <Compile Include="MergeResult.cs" />
@@ -65,6 +68,10 @@
     <Compile Include="TileMergerDatabase.cs" />
     <Compile Include="ThreadStaticRandom.cs" />
     <Compile Include="UInt128.cs" />
+    <Page Include="CompetitionWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="MainWindow" Width="896" Height="552" ResizeMode="NoResize" WindowStyle="ToolWindow" WindowStartupLocation="CenterScreen" Loaded="MainWindow_OnLoaded">
+        Title="AI Window" Width="896" Height="552" ResizeMode="NoResize" WindowStyle="ToolWindow" WindowStartupLocation="CenterScreen" Loaded="MainWindow_OnLoaded">
   <Window.Resources>
     <Style TargetType="Rectangle">
       <Setter Property="Margin" Value="1" />
@@ -60,7 +60,7 @@
       <Rectangle Grid.Column="3" Grid.Row="3" MouseDown="Rectangle_OnMouseDown"/>
     </Grid>
     <!-- Game Control -->
-    <GroupBox  Grid.Column="2" Header="AI Control" VerticalAlignment="Center" Margin="2">
+    <GroupBox  Grid.Column="2" Header="AI Control" VerticalAlignment="Center" Margin="2" IsEnabled="True">
       <StackPanel Orientation="Vertical" VerticalAlignment="Center">
         <Button x:Name="StartButton" Click="StartButton_OnClick" Content="Start AI" />
         <Button x:Name="StopButton" Click="StopButton_OnClick" Content="Single Move AI" />

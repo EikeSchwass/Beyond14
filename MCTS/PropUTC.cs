@@ -19,7 +19,7 @@ namespace MCTS
 
         private double CurrentBestRating { get; set; }
 
-        public PropUTC(TState startState, AllowedMovesDelegate<TState, TMove, TPrePropState> allowedMoves, PossibleNextStatesDelegate<TState, TPrePropState> possibleNextStates, IsFiniteStateDelegate<TState> isFiniteState, EvaluateOutcomeDelegate<TState> evaluateOutcome, double explorationParameter = 2.1, double explorationParameterBase = 0.07)
+        public PropUTC(TState startState, AllowedMovesDelegate<TState, TMove, TPrePropState> allowedMoves, PossibleNextStatesDelegate<TState, TPrePropState> possibleNextStates, IsFiniteStateDelegate<TState> isFiniteState, EvaluateOutcomeDelegate<TState> evaluateOutcome, double explorationParameter = 2.1, double explorationParameterBase = 0.075)
         {
             AllowedMoves = allowedMoves;
             PossibleNextStates = possibleNextStates;
@@ -183,13 +183,31 @@ namespace MCTS
         {
             TState state = expandedNode.State;
             int depth = 0;
-            while (!IsFiniteState(state) && depth <= 2)
+            while (!IsFiniteState(state) && depth <= 4)
             {
                 //DebugCallback(state);
                 var allowedMoves = AllowedMoves(state);
-                var random = ThreadStaticRandom.Next(0, allowedMoves.Length);
-                var allowedMove = allowedMoves[random];
-                state = PossibleNextStates(allowedMove.Value).RandomlySelect();
+                KeyValuePair<TMove, TPrePropState> bestMove;
+                double bestRating = double.MinValue;
+
+                KeyValuePair<TState, double>[] bestPossibleNextStates = new KeyValuePair<TState, double>[0];
+                foreach (var move in allowedMoves)
+                {
+                    double rating = 0;
+                    var possibleNextStates = PossibleNextStates(move.Value);
+                    foreach (var nextState in possibleNextStates)
+                    {
+                        rating += EvaluateOutcome(nextState.Key);
+                    }
+                    rating /= possibleNextStates.Length;
+                    if (rating > bestRating)
+                    {
+                        bestRating = rating;
+                        bestPossibleNextStates = possibleNextStates;
+                    }
+                }
+
+                state = bestPossibleNextStates.RandomlySelect();
                 depth++;
             }
             var outcome = EvaluateOutcome(state);

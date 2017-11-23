@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using MCTS;
+using static System.Math;
 
 namespace Beyond14.MonteCarlo
 {
@@ -11,7 +13,7 @@ namespace Beyond14.MonteCarlo
         private long MoveDuration { get; }
         private PropUTC<Board, Move, Board> PropUTC { get; set; }
 
-        public UCT(long moveDuration = 150)
+        public UCT(long moveDuration = 2000)
         {
             MoveDuration = moveDuration;
         }
@@ -37,12 +39,24 @@ namespace Beyond14.MonteCarlo
             var cancellationTokenSource = new CancellationTokenSource();
             var token = cancellationTokenSource.Token;
             var stopwatch = Stopwatch.StartNew();
-            while (stopwatch.ElapsedMilliseconds <= MoveDuration)
+            var a = GameHelper.GetArrayFromArea(board.Field).Enumerate().OrderByDescending(s => s).ToArray();
+            var emptyTileCount = GameHelper.GetEmptyTileCount(board.Field);
+            double md = emptyTileCount >= 15 ? 10 : a.First() + a.Skip(1).First() * 1.0 / a.First();
+            if (a.First() < 18)
+                md = 15;
+
+            md = Sigmoid(md);
+            while (stopwatch.ElapsedMilliseconds <= md)
             {
                 PropUTC.ImproveTree(token);
             }
             stopwatch.Stop();
             return PropUTC.GetCurrentBestMove();
+        }
+
+        private double Sigmoid(double x)
+        {
+            return 100 + 3000 / (1 + Pow(E, -1 * (x - 18.5)));
         }
 
         private KeyValuePair<Move, Board>[] AllowedMoves(Board state)

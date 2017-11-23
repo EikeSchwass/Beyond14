@@ -1,4 +1,6 @@
-﻿using System;
+﻿// ReSharper disable once RedundantUsingDirective
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -9,7 +11,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
-// ReSharper disable once RedundantUsingDirective
 using Beyond14.ExpectiMax;
 using Beyond14.MonteCarlo;
 
@@ -23,7 +24,7 @@ namespace Beyond14
         private Dictionary<int, Brush> Colors { get; } = new Dictionary<int, Brush>();
         private Stack<Board> BoardHistory { get; } = new Stack<Board>();
         private TextBlock[,] TextBlocks { get; } = new TextBlock[4, 4];
-        private Board CurrentBoard => BoardHistory.Any() ? BoardHistory.Peek() : new Board(0, 1, 2);
+        private Board CurrentBoard => BoardHistory.Any() ? BoardHistory.Peek() : InitBoard();
         private Move? LastMove { get; set; }
 
         private AI AI { get; }
@@ -31,35 +32,14 @@ namespace Beyond14
         public MainWindow()
         {
             InitializeComponent();
-            BoardHistory.Push(new Board(0, 1, 2));
+            BoardHistory.Push(InitBoard());
             AI = new UCT();
-        }
-
-
-        private async void StartButton_OnClick(object sender, RoutedEventArgs e)
-        {
-            StartButton.IsEnabled = false;
-            StopButton.IsEnabled = false;
-            ResetButton.IsEnabled = false;
-            while (GameHelper.GetEmptyTileCount(CurrentBoard.Field) > 0)
-            {
-                var stopwatch = Stopwatch.StartNew();
-                var move = await AI.CalculateMoveAsync(CurrentBoard, LastMove);
-                ExecuteMove(move);
-                LastMove = move;
-                stopwatch.Stop();
-                if (stopwatch.ElapsedMilliseconds < 100)
-                    await Task.Delay((int)(100 - stopwatch.ElapsedMilliseconds));
-            }
         }
 
         private void DebugBoard(Board board)
         {
             Thread.Sleep(50);
-            Dispatcher.Invoke(() =>
-                              {
-                                  RenderBoard(board);
-                              });
+            Dispatcher.Invoke(() => { RenderBoard(board); });
         }
 
         private void ExecuteMove(Move move)
@@ -71,48 +51,20 @@ namespace Beyond14
             RenderBoard(CurrentBoard);
         }
 
-        private void RenderBoard(Board board)
+        private Board InitBoard()
         {
-            NextTile.Text = board.NextTile + "";
-            AfterNextTile.Text = board.AfterNextTile + "";
+            return new Board(0, 14, 14);
+            var shorts = new short[4, 4];
             for (int i = 0; i < 4; i++)
             {
                 for (int j = 0; j < 4; j++)
                 {
-                    var tile = GameHelper.GetTileInArea(board.Field, i, j, 4);
-                    var rectangle = PlayGrid.Children.OfType<Rectangle>().First(r =>
-                                                                                {
-                                                                                    return Grid.GetColumn(r) == i && Grid.GetRow(r) == j;
-                                                                                });
-                    rectangle.Fill = tile == 0 ? (Brush)FindResource("BackgroundColorBrush") : Colors[(tile - 1) % 7 + 1];
-                    TextBlocks[i, j].Text = tile > 0 ? tile + "" : "";
+                    var next = (short)ThreadStaticRandom.Next(16, 19);
+                    shorts[i, j] = (short)(ThreadStaticRandom.NextDouble(1) < 0.2 ? next : 0);
                 }
             }
-            NextTileRectangle.Fill = Colors[(board.NextTile - 1) % 7 + 1];
-            AfterNextTileRectangle.Fill = Colors[(board.AfterNextTile - 1) % 7 + 1];
-        }
-
-        private void UndoButton_OnClick(object sender, RoutedEventArgs e)
-        {
-            if (BoardHistory.Any())
-                BoardHistory.Pop();
-            RenderBoard(CurrentBoard);
-        }
-        private void StopButton_OnClick(object sender, RoutedEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-        private void ResetButton_OnClick(object sender, RoutedEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void Rectangle_OnMouseDown(object sender, MouseButtonEventArgs e)
-        {
-            var rectangle = (Rectangle)sender;
-            int col = Grid.GetColumn(rectangle);
-            int row = Grid.GetRow(rectangle);
-            ExecuteMove(new Move((short)col, (short)row));
+            var field = GameHelper.GetAreaFromArray(shorts, 5);
+            return new Board(field, (ushort)ThreadStaticRandom.Next(17, 18), (ushort)ThreadStaticRandom.Next(17, 18));
         }
 
         private void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
@@ -138,6 +90,64 @@ namespace Beyond14
             }
             RenderBoard(CurrentBoard);
             //TileMergerDatabase.Initialize();
+        }
+
+        private void Rectangle_OnMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            var rectangle = (Rectangle)sender;
+            int col = Grid.GetColumn(rectangle);
+            int row = Grid.GetRow(rectangle);
+            ExecuteMove(new Move((short)col, (short)row));
+        }
+
+        private void RenderBoard(Board board)
+        {
+            NextTile.Text = board.NextTile + "";
+            AfterNextTile.Text = board.AfterNextTile + "";
+            for (int i = 0; i < 4; i++)
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    var tile = GameHelper.GetTileInArea(board.Field, i, j, 4);
+                    var rectangle = PlayGrid.Children.OfType<Rectangle>().First(r => { return Grid.GetColumn(r) == i && Grid.GetRow(r) == j; });
+                    rectangle.Fill = tile == 0 ? (Brush)FindResource("BackgroundColorBrush") : Colors[(tile - 1) % 7 + 1];
+                    TextBlocks[i, j].Text = tile > 0 ? tile + "" : "";
+                }
+            }
+            NextTileRectangle.Fill = Colors[(board.NextTile - 1) % 7 + 1];
+            AfterNextTileRectangle.Fill = Colors[(board.AfterNextTile - 1) % 7 + 1];
+        }
+        private void ResetButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private async void StartButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            StartButton.IsEnabled = false;
+            StopButton.IsEnabled = false;
+            ResetButton.IsEnabled = false;
+            while (GameHelper.GetEmptyTileCount(CurrentBoard.Field) > 0)
+            {
+                var stopwatch = Stopwatch.StartNew();
+                var move = await AI.CalculateMoveAsync(CurrentBoard, LastMove);
+                ExecuteMove(move);
+                LastMove = move;
+                stopwatch.Stop();
+                if (stopwatch.ElapsedMilliseconds < 100)
+                    await Task.Delay((int)(100 - stopwatch.ElapsedMilliseconds));
+            }
+        }
+        private void StopButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void UndoButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            if (BoardHistory.Any())
+                BoardHistory.Pop();
+            RenderBoard(CurrentBoard);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using static System.Math;
@@ -30,7 +31,34 @@ namespace Beyond14
 
         public List<ushort> GetPossibleNextTiles(Board board)
         {
-            ushort min = 1;
+            const double minFactor = 0.5;
+            const double maxFactor = 0.7;
+
+            var results = new List<ushort>();
+
+            ushort minTile = GameHelper.GetMinTileInAreaExcludingEmpty(board.Field);
+            ushort maxTile = GameHelper.GetMaxTileInArea(board.Field);
+
+            if (minTile == 0)
+                minTile = 1;
+
+            if (maxTile == 0)
+                maxTile = 2;
+
+            ushort min = (ushort)(Floor(Max(1, maxTile * minFactor)) + 0.001);
+            ushort max = (ushort)(Floor(Max(1, maxTile * maxFactor)) + 1.001);
+
+
+            for (ushort i = min; i <= max; i++)
+            {
+                if (!results.Contains(i))
+                    results.Add(i);
+            }
+            if (!results.Contains(minTile))
+                results.Add(minTile);
+            return results;
+
+            /*ushort min = 1;
             ushort max = 0;
             ushort maxTile = GameHelper.GetMaxTileInArea(board.Field);
             if (maxTile >= 5)
@@ -43,10 +71,11 @@ namespace Beyond14
             }
             if (maxTile - 3 >= 9)
             {
-                ushort minInQueue = board.NextTile < board.AfterNextTile ? board.NextTile : board.AfterNextTile;
+                min = board.NextTile < board.AfterNextTile ? board.NextTile : board.AfterNextTile;
+                min = (ushort)Min(min, GameHelper.GetMinTileInAreaExcludingEmpty(board.Field));
                 ushort num3 = (ushort)Max(2, (int)(Ceiling(maxTile * 0.7 - 7) + 0.001));
-                if (minInQueue < num3)
-                    max = Max(max, minInQueue);
+                if (min < num3)
+                    max = Max(max, min);
                 else
                 {
                     max = (ushort)(num3 + 8);
@@ -58,7 +87,7 @@ namespace Beyond14
             {
                 result.Add(i);
             }
-            return result;
+            return result;*/
         }
 
         public UInt128 MergeTiles(UInt128 nextField, short x, short y)

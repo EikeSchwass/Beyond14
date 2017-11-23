@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using static System.Math;
 
 namespace Beyond14.ExpectiMax
 {
@@ -14,7 +15,7 @@ namespace Beyond14.ExpectiMax
         protected override Move CalculateNextMove(Board board, Move? lastMove)
         {
             var emptyTileCount = 16 - GameHelper.GetEmptyTileCount(board.Field);
-            Depth = (int)Math.Sqrt(emptyTileCount);
+            Depth = (int)Sqrt(emptyTileCount);
 
             if (Depth < 2)
                 Depth = 2;
@@ -99,11 +100,18 @@ namespace Beyond14.ExpectiMax
             return neighbours;
         }
 
+        private static double Sigmoid(double x)
+        {
+            return 1 / (1 + Pow(E, -0.3 * (x - 13)));
+        }
 
         public static double Heuristik(Board board)
         {
             var emptyTileCount = GameHelper.GetEmptyTileCount(board.Field);
-            return emptyTileCount / 8.0 + GameHelper.GetMaxTileInArea(board.Field) / 16.0;
+            var result = emptyTileCount + GameHelper.GetMaxTileInArea(board.Field) / 10.0;
+            return Sigmoid(result);
+
+
             double rating = 0;
             List<short> tiles = new List<short>();
             ushort highestTile = GameHelper.GetMaxTileInArea(board.Field);
