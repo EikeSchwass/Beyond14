@@ -17,8 +17,6 @@ namespace MCTS
         internal PossibleNextStatesDelegate<TState, TPrePropState> PossibleNextStates { get; }
         internal StateNode<TState, TMove, TPrePropState> Root { get; private set; }
 
-        private double CurrentBestRating { get; set; }
-
         public PropUTC(TState startState, AllowedMovesDelegate<TState, TMove, TPrePropState> allowedMoves, PossibleNextStatesDelegate<TState, TPrePropState> possibleNextStates, IsFiniteStateDelegate<TState> isFiniteState, EvaluateOutcomeDelegate<TState> evaluateOutcome, double explorationParameter = 2.1, double explorationParameterBase = 0.075)
         {
             AllowedMoves = allowedMoves;
@@ -31,33 +29,14 @@ namespace MCTS
             Expansion(Root, Root);
         }
 
-        public TMove GetCurrentBestMove()
+        public KeyValuePair<TMove, int>[] GetCurrent()
         {
-            ImproveSubtree(Root);
-            ImproveSubtree(Root);
-            ImproveSubtree(Root);
-            ImproveSubtree(Root);
-            ImproveSubtree(Root);
-            var bestChild = Root.Children.First();
-            foreach (var node in Root.Children)
-            {
-                if (node.Rating > bestChild.Rating)
-                {
-                    bestChild = node;
-                }
-            }
-            return bestChild.MoveToReach;
+            return Root.Children.Select(c => new KeyValuePair<TMove, int>(c.MoveToReach, c.Visits)).ToArray();
         }
 
         public void ImproveTree(CancellationToken cancellationToken)
         {
-            var followupsFromRoot = GetFollowupsFromRoot();
-            Parallel.ForEach(followupsFromRoot, ImproveSubtree);
-            /*ImproveSubtree(Root);
-            /*ImproveSubtree(Root);
             ImproveSubtree(Root);
-            ImproveSubtree(Root);
-            ImproveSubtree(Root);*/
         }
 
         private void Backpropagation(StateNode<TState, TMove, TPrePropState> expandedNode, double simulationOutcome, StateNode<TState, TMove, TPrePropState> state)
@@ -65,15 +44,9 @@ namespace MCTS
             while (expandedNode != Root)
             {
                 StateNode<TState, TMove, TPrePropState> next;
-                lock (expandedNode)
-                {
-                    lock (expandedNode.Parent)
-                    {
-                        expandedNode.Parent.Visits++;
-                        expandedNode.Parent.Rating += simulationOutcome;
-                        next = expandedNode.Parent?.Parent;
-                    }
-                }
+                expandedNode.Parent.Visits++;
+                expandedNode.Parent.Rating += simulationOutcome;
+                next = expandedNode.Parent?.Parent;
                 expandedNode = next;
             }
         }
@@ -143,18 +116,14 @@ namespace MCTS
 
         private int RootVisits()
         {
-            lock (Root)
+            if (Root.IsLeaf)
+                return 0;
+            int sum = 0;
+            foreach (var child in Root.Children)
             {
-                if (Root.IsLeaf)
-                    return 0;
-                int sum = 0;
-                foreach (var child in Root.Children)
-                {
-                    lock (child)
-                        sum += child.Visits;
-                }
-                return sum;
+                sum += child.Visits;
             }
+            return sum;
         }
 
         private StateNode<TState, TMove, TPrePropState> Selection(StateNode<TState, TMove, TPrePropState> start)

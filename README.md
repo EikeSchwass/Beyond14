@@ -1,5 +1,4 @@
 # Beyond14
 
---- Prevent expansion, when terminal ???
 
---- Check Random tile gernation
+--- Evaluation fix, so merging is always prefered

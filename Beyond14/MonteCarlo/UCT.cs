@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using MCTS;
 using static System.Math;
 
@@ -11,7 +12,6 @@ namespace Beyond14.MonteCarlo
     public class UCT : AI
     {
         private long MoveDuration { get; }
-        private PropUTC<Board, Move, Board> PropUTC { get; set; }
 
         public UCT(long moveDuration = 2000)
         {
@@ -20,43 +20,48 @@ namespace Beyond14.MonteCarlo
 
         protected override Move CalculateNextMove(Board board, Move? lastMove)
         {
-            if (lastMove != null && false)
+            List<PropUTC<Board, Move, Board>> trees = new List<PropUTC<Board, Move, Board>>();
+            for (int i = 0; i < 24; i++)
             {
-                try
-                {
-                    PropUTC.MoveRoot(board);
-                }
-                catch (InvalidOperationException)
-                {
-                    PropUTC = new PropUTC<Board, Move, Board>(board, AllowedMoves, PossibleNextStates, IsFiniteState, EvaluateOutcome);
-                    Debug.WriteLine("Had to reset tree", "Error");
-                }
+                trees.Add(new PropUTC<Board, Move, Board>(board, AllowedMoves, PossibleNextStates, IsFiniteState, EvaluateOutcome));
             }
-            else
-            {
-                PropUTC = new PropUTC<Board, Move, Board>(board, AllowedMoves, PossibleNextStates, IsFiniteState, EvaluateOutcome);
-            }
+
             var cancellationTokenSource = new CancellationTokenSource();
             var token = cancellationTokenSource.Token;
-            var stopwatch = Stopwatch.StartNew();
             var a = GameHelper.GetArrayFromArea(board.Field).Enumerate().OrderByDescending(s => s).ToArray();
             var emptyTileCount = GameHelper.GetEmptyTileCount(board.Field);
             double md = emptyTileCount >= 15 ? 10 : a.First() + a.Skip(1).First() * 1.0 / a.First();
-            if (a.First() < 18)
-                md = 15;
 
             md = Sigmoid(md);
-            while (stopwatch.ElapsedMilliseconds <= md)
+
+            DateTime startTime = DateTime.Now;
+            Parallel.ForEach(trees,
+                             tree =>
+                             {
+                                 while ((DateTime.Now - startTime).TotalMilliseconds <= md)
+                                 {
+                                     tree.ImproveTree(token);
+                                 }
+                             });
+            Dictionary<Move, int> moves = new Dictionary<Move, int>();
+            foreach (var tree in trees)
             {
-                PropUTC.ImproveTree(token);
+                var current = tree.GetCurrent();
+                foreach (var node in current)
+                {
+                    if (moves.ContainsKey(node.Key))
+                        moves[node.Key] += node.Value;
+                    else
+                        moves.Add(node.Key, node.Value);
+                }
             }
-            stopwatch.Stop();
-            return PropUTC.GetCurrentBestMove();
+            var bestMove = moves.MaxElement(m => m.Value).Key;
+            return bestMove;
         }
 
         private double Sigmoid(double x)
         {
-            return 100 + 3000 / (1 + Pow(E, -1 * (x - 18.5)));
+            return 100 + 1500 / (1 + Pow(E, -4 * (x - 18.5)));
         }
 
         private KeyValuePair<Move, Board>[] AllowedMoves(Board state)

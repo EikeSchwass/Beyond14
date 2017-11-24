@@ -53,7 +53,10 @@ namespace Beyond14
 
         private Board InitBoard()
         {
-            return new Board(0, 14, 14);
+            var field = new Board(0, 17, 17).PlaceTile(1, 1);
+            var board = new Board(field, 17, 17);
+            return board;
+            /*
             var shorts = new short[4, 4];
             for (int i = 0; i < 4; i++)
             {
@@ -65,6 +68,7 @@ namespace Beyond14
             }
             var field = GameHelper.GetAreaFromArray(shorts, 5);
             return new Board(field, (ushort)ThreadStaticRandom.Next(17, 18), (ushort)ThreadStaticRandom.Next(17, 18));
+            */
         }
 
         private void MainWindow_OnLoaded(object sender, RoutedEventArgs e)
